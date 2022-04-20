@@ -1,6 +1,7 @@
 # Python standard libraries
 import json
 import os
+from flask_sqlalchemy import SQLAlchemy
 
 # Third-party libraries
 from flask import Flask, redirect, request, url_for
@@ -25,6 +26,15 @@ from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_DISCOVERY_URL
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
+from config import USER, PASSWORD, HOST, PORT, DATABASE
+
+SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}'
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+db = SQLAlchemy(app)
+
+
 # User session management setup
 # https://flask-login.readthedocs.io/en/latest
 login_manager = LoginManager()
@@ -40,23 +50,22 @@ def get_google_provider_cfg():
 # Flask-Login helper to retrieve a user from our db
 # This will manage login session for user
 @login_manager.user_loader
-def load_user(user_name):
-    # make this get_user function to either return whole user info in flask_login template or None 
-    return user.get_user(user_name)
+def load_user(user_id):
+    return user.google_user.get_user(user_id[2:len(user_id)-3])
 
 @app.route("/")
 def index():
-    print(current_user)
+    print("Near is_auth ",current_user)
     if current_user.is_authenticated:
         return (
             "<p>Hello, {}! You're logged in! Email: {}</p>"
-            "<div><p>Google Profile Picture:</p>"
             '<a class="button" href="/logout">Logout</a>'.format(
                 current_user.name, current_user.email
             )
         )
     else:
         return '<a class="button" href="/login">Google Login</a>'
+
 @app.route("/login")
 def login():
     # Find out what URL to hit for Google login
@@ -111,7 +120,6 @@ def callback():
         users_name = userinfo_response.json()["given_name"]
     else:
         return "User email not available or not verified by Google.", 400
-    
     # Create a user in your db with the information provided
     # by Google
     print(unique_id, users_email, users_name)
@@ -121,8 +129,8 @@ def callback():
     print("*********************************")
 
     # Doesn't exist? Add it to the database.
-    # if not user.get_user(users_name):
-    #     user.create_user(users_name, users_email)
+    if not user.google_user.get_user(unique_id):
+        user.google_user.create_user(unique_id, users_name, users_email)
 
     test_user = user.google_user(
         id_ = unique_id, 
@@ -131,12 +139,8 @@ def callback():
         )
 
     # Begin user session by logging the user in
-    print("**************************")
-    print(current_user, test_user)
-    print("**************************")
-    x= login_user(test_user)
-    print(x)
-
+    print()
+    login_user(test_user)
     # Send user back to homepage
     return redirect(url_for("index"))
 

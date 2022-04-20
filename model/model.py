@@ -12,6 +12,30 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 db = SQLAlchemy(app)
 
+class Login_Data(db.Model):
+    __tablename__ = 'login_data'
+    id = db.Column(db.String(), primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    email = db.Column(db.String(), nullable=False)
+    key = db.Column(db.String(), nullable=False)
+    admin = db.Column(db.Boolean(), unique=False, default=False)
+
+    def __init__(self, id, email, key, admin, name):
+        self.id = id
+        self.name = name
+        self.email = email
+        self.key = key
+        self.admin = admin
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'key': self.key,
+            'admin': self.admin
+        }
+
 class User(db.Model):
     __tablename__ = 'user'
 

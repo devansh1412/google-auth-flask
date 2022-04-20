@@ -1,7 +1,7 @@
 from enum import unique
 from utils import keygenerator
 
-from model.model import User
+from model.model import Login_Data
 from model.model import db
 
 key_object = keygenerator.KeyGenerator()
@@ -9,62 +9,50 @@ key_object = keygenerator.KeyGenerator()
 from flask_login import UserMixin
 
 class google_user(UserMixin):
-    def __init__(self, id_, name, email):
-        self.id = id_
-        self.name = name
+    def __init__(self,id_,  name, email):
+        self.id = id_,
+        self.name = name,
         self.email = email
 
-def create_user(username, email):
-    #check if already exists
-    try:
-        users = User.query.filter_by(username=username).all()
-    except Exception as e:
-        return(str(e))
-    if len(users) != 0:
-        return None
-    # get the api_key for this user
-    key_object.generateKey(10)
-    dev_key = key_object.getKey()
-    # get the quota from config.py
-    # quota = config.ALLOWED_API_CALL
-    # insert item into user table
-    print("insert item into user table step called")
-    # try:
-    #     new_user = User(
-    #             username = username,
-    #             email = email,
-    #             key = dev_key,
-    #     )
-    #     db.session.add(new_user)
-    #     db.session.commit()
-    #     return dev_key
-    # except Exception as e:
-    #     return(str(e))
-
-def get_user(username):
-    # check username and password
-    return google_user( "tester", "tester", "tester")
-    # try:
-    #     users = User.query.filter_by(username=username).first()
-    #     return users
-    # except Exception as e:
-	#     return None
-
-def update_key(username):
-    # check username and password
-    try:
-        users = User.query.filter_by(username=username).first()
-        if users != None:
-            # get a new key
-            key_object.generateKey(10)
-            dev_key = key_object.getKey()   
-            # update the key to user table
-            updated_user = User.query.filter_by(username = username).first()
-            updated_user.key = dev_key
-            db.session.commit()
-            return dev_key
-        else:
+    @staticmethod
+    def get_user(user_id):
+        try:
+            users = Login_Data.query.filter_by(id=str(user_id)).all()
+            if len(users) > 0:
+                new_user = google_user(
+                    id_ = users[0].id ,
+                    name = users[0].name,
+                    email =  users[0].email
+                    )
+                return new_user
+            else: 
+                return None
+        except Exception as e:
             return None
-    except Exception as e:
-	    return(str(e))
+
+    @staticmethod
+    def create_user(_id ,_name, _email, _admin = False):
+        key_object.generateKey(10)
+        dev_key = key_object.getKey()
+        try:
+            new_user = Login_Data(
+                    id = _id,
+                    name = _name,
+                    email = _email,
+                    key = dev_key,
+                    admin = _admin
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            print("user added")
+            return dev_key
+        except Exception as e:
+            return(str(e))
+
+
+
+# if __name__ == "__main__":
+    # users = Login_Data.query.filter_by(name="test").all()
+    # print(len(users))
+    # print(get_user("test"))
     
