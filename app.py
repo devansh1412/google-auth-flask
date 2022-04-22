@@ -4,7 +4,7 @@ import os
 from flask_sqlalchemy import SQLAlchemy
 
 # Third-party libraries
-from flask import Flask, redirect, request, url_for
+from flask import Flask, redirect, request, url_for, render_template
 from flask_login import (
     LoginManager,
     current_user,
@@ -14,10 +14,9 @@ from flask_login import (
 )
 from oauthlib.oauth2 import WebApplicationClient
 import requests
-from model.model import User
 
 # Internal imports
-import user
+from core import user
 
 # Configuration
 from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_DISCOVERY_URL
@@ -55,7 +54,6 @@ def load_user(user_id):
 
 @app.route("/")
 def index():
-    print("Near is_auth ",current_user)
     if current_user.is_authenticated:
         return (
             "<p>Hello, {}! You're logged in! Email: {}</p>"
@@ -65,6 +63,10 @@ def index():
         )
     else:
         return '<a class="button" href="/login">Google Login</a>'
+
+@app.route("/test")
+def test():
+    return render_template("login.html")
 
 @app.route("/login")
 def login():
@@ -124,10 +126,6 @@ def callback():
     # by Google
     print(unique_id, users_email, users_name)
 
-    print("*********************************")
-    print("Reached database call")
-    print("*********************************")
-
     # Doesn't exist? Add it to the database.
     if not user.google_user.get_user(unique_id):
         user.google_user.create_user(unique_id, users_name, users_email)
@@ -139,7 +137,6 @@ def callback():
         )
 
     # Begin user session by logging the user in
-    print()
     login_user(test_user)
     # Send user back to homepage
     return redirect(url_for("index"))
