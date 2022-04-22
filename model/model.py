@@ -48,7 +48,7 @@ class User(db.Model):
     batch = db.Column(db.Integer)
     cgpa = db.Column(db.Numeric(4,2))
     timestamp = db.Column(db.Integer)
-    status = db.Column(db.Enum("A","U",name='selection_status'))
+    status = db.Column(db.Enum("A","U",name='approval_status'))
 
     def __init__(self, id, email, key, admin, first_name, last_name, batch, cgpa, timestamp, status):
         self.id = id
@@ -82,7 +82,7 @@ class Company(db.Model):
     id = db.Column(db.String(), primary_key=True)
     name = db.Column(db.String(), nullable=False)
     timestamp = db.Column(db.Integer)
-    status = db.Column(db.Enum("A","U",name='selection_status'))
+    status = db.Column(db.Enum("A","U",name='approval_status'))
 
     def __init__(self, id, name, timestamp, status):
         self.id = id
@@ -103,9 +103,10 @@ class Blog(db.Model):
 
     id = db.Column(db.String(), primary_key=True)
     level = db.Column(db.Integer, nullable=False)
-    article = db.Column(db.String(), primary_key=False)
+    article = db.Column(db.ARRAY(db.TEXT), primary_key=False)
     timestamp = db.Column(db.Integer)
-    status = db.Column(db.Enum("A","U",name='selection_status'))
+    status = db.Column(db.Enum("A","U",name='approval_status'))
+    tags = db.Column(db.ARRAY(db.TEXT))
 
     def __init__(self, id, level, article, timestamp, status):
         self.id = id
@@ -132,7 +133,7 @@ class User_Company_Blog(db.Model):
     blog_id = db.Column(db.String(), ForeignKey('blog.id'))
     selected = db.Column(db.Boolean(), unique=False, default=False)
     timestamp = db.Column(db.Integer)
-    status = db.Column(db.Enum("A","U",name='selection_status'))
+    status = db.Column(db.Enum("A","U",name='approval_status'))
 
     def __init__(self, id, user_id, company_id, blog_id, selected, timestamp, status):
         self.id = id
